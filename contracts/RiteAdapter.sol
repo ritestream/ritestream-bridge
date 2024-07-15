@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.20;
 
-import { OFTAdapter } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTAdapter.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
-import { SendParam, MessagingFee, MessagingReceipt, OFTReceipt, OFTLimit, OFTFeeDetail } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
+import {OFTAdapter} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTAdapter.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import {SendParam, MessagingFee, MessagingReceipt, OFTReceipt, OFTLimit, OFTFeeDetail} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 
 contract RiteAdapter is OFTAdapter, Pausable {
     constructor(
@@ -31,7 +31,10 @@ contract RiteAdapter is OFTAdapter, Pausable {
         payable
         override
         whenNotPaused
-        returns (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt)
+        returns (
+            MessagingReceipt memory msgReceipt,
+            OFTReceipt memory oftReceipt
+        )
     {
         // @dev Applies the token transfers regarding this send() operation.
         // - amountSentLD is the amount in local decimals that was ACTUALLY sent/debited from the sender.
@@ -44,14 +47,29 @@ contract RiteAdapter is OFTAdapter, Pausable {
         );
 
         // @dev Builds the options and OFT message to quote in the endpoint.
-        (bytes memory message, bytes memory options) = _buildMsgAndOptions(_sendParam, amountReceivedLD);
+        (bytes memory message, bytes memory options) = _buildMsgAndOptions(
+            _sendParam,
+            amountReceivedLD
+        );
 
         // @dev Sends the message to the LayerZero endpoint and returns the LayerZero msg receipt.
-        msgReceipt = _lzSend(_sendParam.dstEid, message, options, _fee, _refundAddress);
+        msgReceipt = _lzSend(
+            _sendParam.dstEid,
+            message,
+            options,
+            _fee,
+            _refundAddress
+        );
         // @dev Formulate the OFT receipt.
         oftReceipt = OFTReceipt(amountSentLD, amountReceivedLD);
 
-        emit OFTSent(msgReceipt.guid, _sendParam.dstEid, msg.sender, amountSentLD, amountReceivedLD);
+        emit OFTSent(
+            msgReceipt.guid,
+            _sendParam.dstEid,
+            msg.sender,
+            amountSentLD,
+            amountReceivedLD
+        );
     }
 
     function _debit(
@@ -59,18 +77,32 @@ contract RiteAdapter is OFTAdapter, Pausable {
         uint256 _amountLD,
         uint256 _minAmountLD,
         uint32 _dstEid
-    ) internal override whenNotPaused returns (uint256 amountSentLD, uint256 amountReceivedLD) {
-        (amountSentLD, amountReceivedLD) = _debitView(_amountLD, _minAmountLD, _dstEid);
+    )
+        internal
+        override
+        whenNotPaused
+        returns (uint256 amountSentLD, uint256 amountReceivedLD)
+    {
+        (amountSentLD, amountReceivedLD) = _debitView(
+            _amountLD,
+            _minAmountLD,
+            _dstEid
+        );
         // @dev Lock tokens by moving them into this contract from the caller.
         innerToken.transferFrom(_from, address(this), amountSentLD);
-        // Charge 0.5% fee
+        // @dev Charge 0.5% fee
         uint256 fee = _amountLD / 200;
         uint256 amountToSend = _amountLD - fee;
         uint256 allowance = innerToken.allowance(address(this), address(this));
         if (allowance < fee) {
             innerToken.approve(address(this), type(uint256).max);
         }
-        innerToken.transferFrom(address(this), address(0x000000000000000000000000000000000000dEaD), fee);
+        // @dev transfer the fee to the dead address
+        innerToken.transferFrom(
+            address(this),
+            address(0x000000000000000000000000000000000000dEaD),
+            fee
+        );
         amountReceivedLD = amountToSend;
     }
 
@@ -79,11 +111,17 @@ contract RiteAdapter is OFTAdapter, Pausable {
         uint256 _amountLD,
         uint32 /*_srcEid*/
     ) internal virtual override returns (uint256 amountReceivedLD) {
-        // Charge 0.5% fee
+        // @dev charge 0.05% fee
         uint256 fee = _amountLD / 200;
         uint256 amountToSend = _amountLD - fee;
+
+        // @dev transfer the fee to the dead address
+        innerToken.transferFrom(
+            address(this),
+            address(0x000000000000000000000000000000000000dEaD),
+            fee
+        );
         // @dev Unlock the tokens and transfer to the recipient.
-        innerToken.transferFrom(address(this), address(0x000000000000000000000000000000000000dEaD), fee);
         innerToken.transferFrom(address(this), _to, amountToSend);
         // @dev In the case of NON-default OFTAdapter, the amountLD MIGHT not be == amountReceivedLD.
         return amountToSend;
@@ -95,7 +133,11 @@ contract RiteAdapter is OFTAdapter, Pausable {
         external
         view
         override
-        returns (OFTLimit memory oftLimit, OFTFeeDetail[] memory oftFeeDetails, OFTReceipt memory oftReceipt)
+        returns (
+            OFTLimit memory oftLimit,
+            OFTFeeDetail[] memory oftFeeDetails,
+            OFTReceipt memory oftReceipt
+        )
     {
         uint256 minAmountLD = 0; // Unused in the default implementation.
         uint256 maxAmountLD = type(uint64).max; // Unused in the default implementation.
