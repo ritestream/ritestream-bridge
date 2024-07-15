@@ -157,7 +157,7 @@ describe("OFTAdapter Test", function () {
       const quote = await myOFTAdapter.quoteOFT(sendParam);
       expect(quote.oftReceipt.amountSentLD).eql(tokensToSend);
       expect(quote.oftReceipt.amountReceivedLD).eql(
-        tokensToSend.sub(tokensToSend.div(200))
+        tokensToSend.sub(tokensToSend.div(2000))
       );
 
       const [nativeFee] = await myOFTAdapter.quoteSend(sendParam, false);
@@ -173,7 +173,7 @@ describe("OFTAdapter Test", function () {
       // Asserting that the final balances are as expected after the send operation
       expect(finalBalanceA).eql(initialAmount.sub(tokensToSend));
       // Receive token amount should be without 0.5% fee
-      expect(finalBalanceB).eql(tokensToSend.sub(tokensToSend.div(200)));
+      expect(finalBalanceB).eql(tokensToSend.sub(tokensToSend.div(2000)));
 
       // Bridge back
       const tokensToSendBack = ethers.utils.parseEther("10");
@@ -196,7 +196,7 @@ describe("OFTAdapter Test", function () {
       const bridgeBackQuote = await myOFTB.quoteOFT(sendParam);
       expect(bridgeBackQuote.oftReceipt.amountSentLD).eql(tokensToSend);
       expect(bridgeBackQuote.oftReceipt.amountReceivedLD).eql(
-        tokensToSend.sub(tokensToSend.div(200))
+        tokensToSend.sub(tokensToSend.div(2000))
       );
 
       const [nativeFeeToBack] = await myOFTB.quoteSend(sendBackParam, false);
@@ -212,7 +212,7 @@ describe("OFTAdapter Test", function () {
 
       expect(finalBalanceBAfterBack).eql(finalBalanceB.sub(tokensToSendBack));
       expect(finalBalanceAAfterBack).eql(
-        tokensToSendBack.sub(tokensToSendBack.div(200))
+        tokensToSendBack.sub(tokensToSendBack.div(2000))
       );
     } catch (error) {
       console.log(error);

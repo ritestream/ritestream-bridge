@@ -2,15 +2,18 @@
 pragma solidity ^0.8.22;
 
 import "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFT.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
-import { SendParam, MessagingFee, MessagingReceipt, OFTReceipt, OFTLimit, OFTFeeDetail } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import {SendParam, MessagingFee, MessagingReceipt, OFTReceipt, OFTLimit, OFTFeeDetail} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 
 contract RiteBase is OFT, Pausable {
     constructor(
         address _layerZeroEndpoint, // local endpoint address
         address _owner // token owner used as a delegate in LayerZero Endpoint
-    ) OFT("Rite token base", "Rite", _layerZeroEndpoint, _owner) Ownable(_owner) {
+    )
+        OFT("Rite token base", "Rite", _layerZeroEndpoint, _owner)
+        Ownable(_owner)
+    {
         // your contract logic here
         _mint(msg.sender, 100 ether); // mints 100 tokens to the deployer
     }
@@ -36,7 +39,10 @@ contract RiteBase is OFT, Pausable {
         payable
         override
         whenNotPaused
-        returns (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt)
+        returns (
+            MessagingReceipt memory msgReceipt,
+            OFTReceipt memory oftReceipt
+        )
     {
         // @dev Applies the token transfers regarding this send() operation.
         // - amountSentLD is the amount in local decimals that was ACTUALLY sent/debited from the sender.
@@ -49,14 +55,29 @@ contract RiteBase is OFT, Pausable {
         );
 
         // @dev Builds the options and OFT message to quote in the endpoint.
-        (bytes memory message, bytes memory options) = _buildMsgAndOptions(_sendParam, amountReceivedLD);
+        (bytes memory message, bytes memory options) = _buildMsgAndOptions(
+            _sendParam,
+            amountReceivedLD
+        );
 
         // @dev Sends the message to the LayerZero endpoint and returns the LayerZero msg receipt.
-        msgReceipt = _lzSend(_sendParam.dstEid, message, options, _fee, _refundAddress);
+        msgReceipt = _lzSend(
+            _sendParam.dstEid,
+            message,
+            options,
+            _fee,
+            _refundAddress
+        );
         // @dev Formulate the OFT receipt.
         oftReceipt = OFTReceipt(amountSentLD, amountReceivedLD);
 
-        emit OFTSent(msgReceipt.guid, _sendParam.dstEid, msg.sender, amountSentLD, amountReceivedLD);
+        emit OFTSent(
+            msgReceipt.guid,
+            _sendParam.dstEid,
+            msg.sender,
+            amountSentLD,
+            amountReceivedLD
+        );
     }
 
     function quoteOFT(
@@ -65,7 +86,11 @@ contract RiteBase is OFT, Pausable {
         external
         view
         override
-        returns (OFTLimit memory oftLimit, OFTFeeDetail[] memory oftFeeDetails, OFTReceipt memory oftReceipt)
+        returns (
+            OFTLimit memory oftLimit,
+            OFTFeeDetail[] memory oftFeeDetails,
+            OFTReceipt memory oftReceipt
+        )
     {
         uint256 minAmountLD = 0; // Unused in the default implementation.
         uint256 maxAmountLD = type(uint64).max; // Unused in the default implementation.
@@ -83,7 +108,7 @@ contract RiteBase is OFT, Pausable {
             _sendParam.minAmountLD,
             _sendParam.dstEid
         );
-        uint256 fee = _sendParam.amountLD / 200;
+        uint256 fee = _sendParam.amountLD / 2000;
         amountReceivedLD = _sendParam.amountLD - fee;
         oftReceipt = OFTReceipt(amountSentLD, amountReceivedLD);
     }
