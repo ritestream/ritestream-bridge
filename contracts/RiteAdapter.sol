@@ -90,8 +90,8 @@ contract RiteAdapter is OFTAdapter, Pausable {
         );
         // @dev Lock tokens by moving them into this contract from the caller.
         innerToken.transferFrom(_from, address(this), amountSentLD);
-        // @dev Charge _amountLD's 0.05% fee
-        uint256 fee = _amountLD / 2000;
+        // @dev Charge _amountLD's 0.5% fee
+        uint256 fee = _amountLD / 200;
         uint256 amountToSend = _amountLD - fee;
 
         uint256 allowance = innerToken.allowance(address(this), address(this));
@@ -112,8 +112,8 @@ contract RiteAdapter is OFTAdapter, Pausable {
         uint256 _amountLD,
         uint32 /*_srcEid*/
     ) internal virtual override returns (uint256 amountReceivedLD) {
-        // @dev charge 0.05% fee
-        uint256 fee = _amountLD / 2000;
+        // @dev charge 0.5% fee
+        uint256 fee = _amountLD / 200;
         uint256 amountToSend = _amountLD - fee;
 
         // @dev transfer the fee to the dead address
@@ -156,7 +156,8 @@ contract RiteAdapter is OFTAdapter, Pausable {
             _sendParam.minAmountLD,
             _sendParam.dstEid
         );
-        uint256 fee = _sendParam.amountLD / 2000;
+        // @dev charge 0.5% fee
+        uint256 fee = _sendParam.amountLD / 200;
         amountReceivedLD = _sendParam.amountLD - fee;
         oftReceipt = OFTReceipt(amountSentLD, amountReceivedLD);
     }

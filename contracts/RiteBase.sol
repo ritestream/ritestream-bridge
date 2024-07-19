@@ -13,10 +13,7 @@ contract RiteBase is OFT, Pausable {
     )
         OFT("Rite token base", "Rite", _layerZeroEndpoint, _owner)
         Ownable(_owner)
-    {
-        // your contract logic here
-        _mint(msg.sender, 100 ether); // mints 100 tokens to the deployer
-    }
+    {}
 
     function decimals() public pure override returns (uint8) {
         return 18;
@@ -108,7 +105,8 @@ contract RiteBase is OFT, Pausable {
             _sendParam.minAmountLD,
             _sendParam.dstEid
         );
-        uint256 fee = _sendParam.amountLD / 2000;
+        // @dev 0.5% fee
+        uint256 fee = _sendParam.amountLD / 200;
         amountReceivedLD = _sendParam.amountLD - fee;
         oftReceipt = OFTReceipt(amountSentLD, amountReceivedLD);
     }
